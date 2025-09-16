@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CX Odyssey: Rise of the Collectors</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ffffff;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .stars {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            z-index: 1;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite alternate;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+
+        .screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            display: none;
+            padding: 20px;
+            overflow-y: auto;
+            padding-bottom: 80px;
+        }
+
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            border: 2px solid #ffd700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+            background: linear-gradient(45deg, #ffd700, #ff6b35, #7209b7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .resources {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .resource {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(255, 215, 0, 0.2);
+            padding: 6px 10px;
+            border-radius: 20px;
+            border: 1px solid #ffd700;
+            font-size: 12px;
+        }
+
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            background: rgba(0, 0, 0, 0.9);
+            border-top: 2px solid #ffd700;
+            z-index: 50;
+        }
+
+        .nav-btn {
+            flex: 1;
+            padding: 12px 8px;
+            text-align: center;
+            background: transparent;
+            color: #888;
+            border: none;
+            cursor: pointer;
+            font-size: 10px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-btn.active {
+            color: #ffd700;
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 215, 0, 0.2);
+            color: #ffd700;
+        }
+
+        .galaxy-map {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            flex: 1;
+            padding: 10px 0;
+        }
+
+        .planet {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            overflow: hidden;
+        }
+
+        .planet-1 {
+            background: radial-gradient(circle at 30% 30%, #ff6b35, #d84315);
+            box-shadow: 0 0 30px rgba(255, 107, 53, 0.5);
+        }
+
+        .planet-2 {
+            background: radial-gradient(circle at 30% 30%, #2196f3, #1565c0);
+            box-shadow: 0 0 30px rgba(33, 150, 243, 0.5);
+        }
+
+        .planet-3 {
+            background: radial-gradient(circle at 30% 30%, #9c27b0, #6a1b9a);
+            box-shadow: 0 0 30px rgba(156, 39, 176, 0.5);
+        }
+
+        .planet-4 {
+            background: radial-gradient(circle at 30% 30%, #4caf50, #2e7d32);
+            box-shadow: 0 0 30px rgba(76, 175, 80, 0.5);
+        }
+
+        .planet-5 {
+            background: radial-gradient(circle at 30% 30%, #ffc107, #f57f17);
+            box-shadow: 0 0 30px rgba(255, 193, 7, 0.5);
+        }
+
+        .planet-6 {
+            background: radial-gradient(circle at 30% 30%, #e91e63, #ad1457);
+            box-shadow: 0 0 30px rgba(233, 30, 99, 0.5);
+        }
+
+        .planet:hover {
+            transform: scale(1.1);
+            filter: brightness(1.2);
+        }
+
+        .planet::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(transparent, rgba(255, 215, 0, 0.3), transparent);
+            animation: rotate 3s linear infinite;
+            border-radius: 50%;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .planet-info {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+        }
+
+        .mining-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 10px;
+        }
+
+        .mining-area {
+            width: 250px;
+            height: 250px;
+            border-radius: 20px;
+            background: radial-gradient(circle at center, rgba(255, 215, 0, 0.2), rgba(0, 0, 0, 0.8));
+            border: 3px solid #ffd700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mining-area:hover {
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.5);
+            transform: scale(1.05);
+        }
+
+        .mining-beam {
+            position: absolute;
+            width: 4px;
+            height: 60px;
+            background: linear-gradient(to bottom, #ffd700, transparent);
+            box-shadow: 0 0 10px #ffd700;
+            animation: mining 1s ease-in-out;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        @keyframes mining {
+            0% { opacity: 0; height: 0; }
+            50% { opacity: 1; height: 60px; }
+            100% { opacity: 0; height: 60px; }
+        }
+
+        .energy-bar {
+            width: 100%;
+            max-width: 300px;
+            height: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #ffd700;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .energy-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b35, #ffd700);
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .action-btn {
+            padding: 12px 20px;
+            background: linear-gradient(45deg, #1a1a2e, #16213e);
+            border: 2px solid #ffd700;
+            border-radius: 25px;
+            color: #ffd700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            min-width: 120px;
+        }
+
+        .action-btn:hover {
+            background: linear-gradient(45deg, #ffd700, #ff6b35);
+            color: #000;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .leaderboard {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ffd700;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 10px 0;
+        }
+
+        .leaderboard-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid #ffd700;
+        }
+
+        .leaderboard-entry.top-3 {
+            background: linear-gradient(90deg, rgba(255, 215, 0, 0.2), rgba(255, 107, 53, 0.2));
+            border-left-color: #ff6b35;
+        }
+
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            padding: 10px 0;
+        }
+
+        .shop-item {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ffd700;
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .shop-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(255, 215, 0, 0.3);
+        }
+
+        .shop-item img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-bottom: 10px;
+        }
+
+        .minigame-area {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ffd700;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .asteroid {
+            width: 30px;
+            height: 30px;
+            background: #666;
+            border-radius: 50%;
+            position: absolute;
+            animation: fall 3s linear infinite;
+        }
+
+        @keyframes fall {
+            from { top: -50px; }
+            to { top: 100vh; }
+        }
+
+        .player-ship {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(45deg, #ffd700, #ff6b35);
+            border-radius: 50% 50% 0 0;
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: left 0.1s ease;
+        }
+
+        .boss-raid {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .boss-health {
+            width: 100%;
+            height: 30px;
+            background: rgba(255, 0, 0, 0.3);
+            border: 3px solid #ff0000;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .boss-health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, #ff6b35);
+            transition: width 0.3s ease;
+        }
+
+        .boss-image {
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, #7209b7, #4a148c);
+            border-radius: 20px;
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            border: 3px solid #ffd700;
+            animation: pulse 2s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 20px rgba(114, 9, 183, 0.5); }
+            100% { box-shadow: 0 0 40px rgba(114, 9, 183, 0.8); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(45deg, #ffd700, #ff6b35);
+            color: #000;
+            padding: 10px 20px;
+            border-radius: 25px;
+            z-index: 100;
+            font-weight: bold;
+            animation: slideDown 0.5s ease, fadeOut 0.5s ease 2.5s forwards;
+        }
+
+        @keyframes slideDown {
+            from { top: -50px; opacity: 0; }
+            to { top: 20px; opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            to { opacity: 0; top: -50px; }
+        }
+
+        .daily-reward {
+            background: linear-gradient(135deg, #ffd700, #ff6b35);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            margin: 10px 0;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .streak-counter {
+            font-size: 24px;
+            margin: 10px 0;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 3px solid #ffd700;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #ffd700;
+            font-size: 24px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Starfield Background -->
+        <div class="stars" id="starfield"></div>
+
+        <!-- Main Galaxy Map Screen -->
+        <div class="screen active" id="galaxyScreen">
+            <div class="header">
+                <div class="logo">CX ODYSSEY</div>
+                <div class="resources">
+                    <div class="resource">⚡ <span id="energy">100</span></div>
+                    <div class="resource">💎 <span id="shards">0</span></div>
+                    <div class="resource">🏆 <span id="gp">0</span></div>
+                </div>
+            </div>
+            
+            <div class="daily-reward" id="dailyReward">
+                <div>Daily Login Bonus!</div>
+                <div class="streak-counter">Day <span id="streakDay">1</span> Streak</div>
+                <div>+<span id="bonusAmount">100</span> GP Earned!</div>
+            </div>
+
+            <div class="galaxy-map">
+                <div class="planet planet-1" onclick="selectPlanet('Pyrion', 1)">
+                    <div class="planet-info">
+                        <div>Pyrion</div>
+                        <div style="font-size: 10px;">Fire World</div>
+                    </div>
+                </div>
+                <div class="planet planet-2" onclick="selectPlanet('Aqueos', 2)">
+                    <div class="planet-info">
+                        <div>Aqueos</div>
+                        <div style="font-size: 10px;">Ocean World</div>
+                    </div>
+                </div>
+                <div class="planet planet-3" onclick="selectPlanet('Voidex', 3)">
+                    <div class="planet-info">
+                        <div>Voidex</div>
+                        <div style="font-size: 10px;">Dark Matter</div>
+                    </div>
+                </div>
+                <div class="planet planet-4" onclick="selectPlanet('Verdant', 4)">
+                    <div class="planet-info">
+                        <div>Verdant</div>
+                        <div style="font-size: 10px;">Bio World</div>
+                    </div>
+                </div>
+                <div class="planet planet-5" onclick="selectPlanet('Aurelia', 5)">
+                    <div class="planet-info">
+                        <div>Aurelia</div>
+                        <div style="font-size: 10px;">Gold Planet</div>
+                    </div>
+                </div>
+                <div class="planet planet-6" onclick="selectPlanet('Crimson', 6)">
+                    <div class="planet-info">
+                        <div>Crimson</div>
+                        <div style="font-size: 10px;">War Zone</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="action-btn" onclick="showScreen('bossScreen')">🐉 Boss Raid</button>
+                <button class="action-btn" onclick="checkDailyReward()">🎁 Daily Login</button>
+            </div>
+        </div>
+
+        <!-- Mining Screen -->
+        <div class="screen" id="miningScreen">
+            <div class="header">
+                <div class="logo">MINING: <span id="currentPlanet">Planet</span></div>
+                <div class="resources">
+                    <div class="resource">⚡ <span id="energyMining">100</span></div>
+                    <div class="resource">💎 <span id="shardsMining">0</span></div>
+                </div>
+            </div>
+
+            <div class="mining-screen">
+                <div class="mining-area" onclick="minePlanet()">
+                    <div style="text-align: center; z-index: 2; position: relative;">
+                        <div style="font-size: 20px; margin-bottom: 10px;">⛏️</div>
+                        <div>TAP TO MINE</div>
+                        <div style="font-size: 12px; opacity: 0.8;">+<span id="mineReward">10</span> Shards</div>
+                    </div>
+                </div>
+
+                <div style="width: 100%; max-width: 300px;">
+                    <div style="margin-bottom: 10px;">Energy: <span id="energyText">100/100</span></div>
+                    <div class="energy-bar">
+                        <div class="energy-fill" id="energyFill" style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="action-btn" onclick="watchAdForEnergy()" id="adBtn">📺 Watch Ad (+50 Energy)</button>
+                    <button class="action-btn" onclick="battleAliens()">⚔️ Battle Aliens</button>
+                    <button class="action-btn" onclick="showScreen('galaxyScreen')">🌌 Back to Galaxy</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Boss Raid Screen -->
+        <div class="screen" id="bossScreen">
+            <div class="header">
+                <div class="logo">BOSS RAID</div>
+                <div class="resources">
+                    <div class="resource">🏆 <span id="gpBoss">0</span></div>
+                    <div class="resource">⚔️ <span id="damage">0</span></div>
+                </div>
+            </div>
+
+            <div class="boss-raid">
+                <h2 style="color: #ffd700; margin-bottom: 20px;">🐉 COSMIC OVERLORD</h2>
+                
+                <div class="boss-image" onclick="attackBoss()">
+                    👹
+                </div>
+
+                <div>
+                    <div style="margin-bottom: 10px;">Boss Health: <span id="bossHealthText">1000/1000</span></div>
+                    <div class="boss-health">
+                        <div class="boss-health-fill" id="bossHealthFill" style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="action-btn" onclick="attackBoss()">⚔️ ATTACK! (Tap)</button>
+                    <button class="action-btn" onclick="watchAdForDamage()">📺 Watch Ad (2x Damage)</button>
+                    <button class="action-btn" onclick="showScreen('galaxyScreen')">🌌 Back to Galaxy</button>
+                </div>
+
+                <div style="margin-top: 20px; font-size: 14px; opacity: 0.8;">
+                    Your Damage: <span id="playerDamage">0</span><br>
+                    Global Progress: <span id="globalProgress">0</span>%
+                </div>
+            </div>
+        </div>
+
+        <!-- Leaderboards Screen -->
+        <div class="screen" id="leaderboardScreen">
+            <div class="header">
+                <div class="logo">LEADERBOARDS</div>
+                <div class="resources">
+                    <div class="resource">🏆 <span id="gpLeaderboard">0</span></div>
+                    <div class="resource">#<span id="playerRank">999</span></div>
+                </div>
+            </div>
+
+            <div class="leaderboard">
+                <h3 style="color: #ffd700; margin-bottom: 20px;">🏆 TOP COLLECTORS</h3>
+                <div class="leaderboard-entry top-3">
+                    <div><span style="color: #ffd700;">👑</span> CX_Master_2025</div>
+                    <div>50,000 GP</div>
+                </div>
+                <div class="leaderboard-entry top-3">
+                    <div><span style="color: #ff6b35;">🥈</span> GalaxyHunter</div>
+                    <div>45,000 GP</div>
+                </div>
+                <div class="leaderboard-entry top-3">
+                    <div><span style="color: #7209b7;">🥉</span> ShardCollector</div>
+                    <div>40,000 GP</div>
+                </div>
+                <div class="leaderboard-entry">
+                    <div>4. StarMiner_Pro</div>
+                    <div>35,000 GP</div>
+                </div>
+                <div class="leaderboard-entry">
+                    <div>5. CosmicRaider</div>
+                    <div>30,000 GP</div>
+                </div>
+                <div class="leaderboard-entry" style="background: rgba(255, 215, 0, 0.3);">
+                    <div><span id="leaderboardRank">999</span>. You</div>
+                    <div><span id="leaderboardGP">0</span> GP</div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="action-btn" onclick="showScreen('galaxyScreen')">🌌 Back to Galaxy</button>
+            </div>
+        </div>
+
+        <!-- Shop Screen -->
+        <div class="screen" id="shopScreen">
+            <div class="header">
+                <div class="logo">SHOP & UPGRADES</div>
+                <div class="resources">
+                    <div class="resource">🏆 <span id="gpShop">0</span></div>
+                    <div class="resource">💎 <span id="shardsShop">0</span></div>
+                </div>
+            </div>
+
+            <div class="shop-grid">
+                <div class="shop-item" onclick="buyUpgrade('speed')">
+                    <div style="font-size: 40px;">🚀</div>
+                    <div>Speed Boost</div>
+                    <div style="color: #ffd700;">500 GP</div>
+                    <div style="font-size: 12px;">+25% Mining Speed</div>
+                </div>
+                <div class="shop-item" onclick="buyUpgrade('damage')">
+                    <div style="font-size: 40px;">⚔️</div>
+                    <div>Damage Boost</div>
+                    <div style="color: #ffd700;">750 GP</div>
+                    <div style="font-size: 12px;">+50% Battle Damage</div>
+                </div>
+                <div class="shop-item" onclick="buyUpgrade('energy')">
+                    <div style="font-size: 40px;">⚡</div>
+                    <div>Energy Tank</div>
+                    <div style="color: #ffd700;">1000 GP</div>
+                    <div style="font-size: 12px;">+50 Max Energy</div>
+                </div>
+                <div class="shop-item" onclick="buyUpgrade('skin1')">
+                    <div style="font-size: 40px; color: #000;">🚀</div>
+                    <div>Black Ship</div>
+                    <div style="color: #ffd700;">2000 GP</div>
+                    <div style="font-size: 12px;">Premium Skin</div>
+                </div>
+                <div class="shop-item" onclick="buyUpgrade('skin2')">
+                    <div style="font-size: 40px; color: #ffd700;">🚀</div>
+                    <div>Gold Ship</div>
+                    <div style="color: #ffd700;">5000 GP</div>
+                    <div style="font-size: 12px;">Legendary Skin</div>
+                </div>
+                <div class="shop-item" onclick="buyUpgrade('multiplier')">
+                    <div style="font-size: 40px;">💰</div>
+                    <div>GP Multiplier</div>
+                    <div style="color: #ffd700;">3000 GP</div>
+                    <div style="font-size: 12px;">+100% GP Gain</div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="action-btn" onclick="showScreen('galaxyScreen')">🌌 Back to Galaxy</button>
+            </div>
+        </div>
+
+        <!-- Mini-Games Screen -->
+        <div class="screen" id="minigamesScreen">
+            <div class="header">
+                <div class="logo">MINI-GAMES HUB</div>
+                <div class="resources">
+                    <div class="resource">🏆 <span id="gpMinigames">0</span></div>
+                    <div class="resource">🎮 <span id="gameScore">0</span></div>
+                </div>
+            </div>
+
+            <div class="shop-grid">
+                <div class="shop-item" onclick="startAsteroidDodge()">
+                    <div style="font-size: 40px;">☄️</div>
+                    <div>Asteroid Dodge</div>
+                    <div style="font-size: 12px;">Survive the asteroid field!</div>
+                    <div style="color: #ffd700;">Reward: 300-1000 GP</div>
+                </div>
+                <div class="shop-item" onclick="startPvPArena()">
+                    <div style="font-size: 40px;">⚔️</div>
+                    <div>CX Arena PvP</div>
+                    <div style="font-size: 12px;">Battle other players!</div>
+                    <div style="color: #ffd700;">Reward: 500-2000 GP</div>
+                </div>
+            </div>
+
+            <div class="minigame-area" id="minigameArea">
+                <h3>Select a mini-game to start!</h3>
+                <p>Earn bonus GP and climb the leaderboards</p>
+            </div>
+
+            <div class="action-buttons">
+                <button class="action-btn" onclick="showScreen('galaxyScreen')">🌌 Back to Galaxy</button>
+            </div>
+        </div>
+
+        <!-- Navigation Bar -->
+        <div class="nav-bar">
+            <button class="nav-btn active" onclick="showScreen('galaxyScreen')">
+                <div>🌌</div>
+                <div>Galaxy</div>
+            </button>
+            <button class="nav-btn" onclick="showScreen('leaderboardScreen')">
+                <div>🏆</div>
+                <div>Ranks</div>
+            </button>
+            <button class="nav-btn" onclick="showScreen('shopScreen')">
+                <div>🛒</div>
+                <div>Shop</div>
+            </button>
+            <button class="nav-btn" onclick="showScreen('minigamesScreen')">
+                <div>🎮</div>
+                <div>Games</div>
+            </button>
+        </div>
+
+        <!-- Modals -->
+        <div class="modal" id="adModal">
+            <div class="modal-content">
+                <button class="close-btn" onclick="closeModal('adModal')">&times;</button>
+                <h2 style="color: #ffd700; margin-bottom: 20px;">🎬 Watch Ad</h2>
+                <p>Watch this short video to get your reward!</p>
+                <div style="width: 300px; height: 200px; background: #333; border-radius: 10px; margin: 20px auto; display: flex; align-items: center; justify-content: center; font-size: 48px;">
+                    📺
+                </div>
+                <div style="margin: 20px 0;">
+                    <div style="width: 100%; height: 4px; background: #333; border-radius: 2px; overflow: hidden;">
+                        <div id="adProgress" style="width: 0%; height: 100%; background: #ffd700; transition: width 0.1s linear;"></div>
+                    </div>
+                    <div style="margin-top: 10px; font-size: 14px;">Ad progress: <span id="adTime">0</span>/5 seconds</div>
+                </div>
+                <button class="action-btn" onclick="skipAd()" id="skipBtn" style="display: none;">✅ Claim Reward</button>
+            </div>
+        </div>
+
+        <div class="modal" id="rewardModal">
+            <div class="modal-content">
+                <button class="close-btn" onclick="closeModal('rewardModal')">&times;</button>
+                <h2 style="color: #ffd700; margin-bottom: 20px;">🎉 Reward Earned!</h2>
+                <div style="font-size: 60px; margin: 20px 0;">💎</div>
+                <div style="font-size: 24px; color: #ffd700;" id="rewardText">+100 GP</div>
+                <p style="margin-top: 20px;">Keep collecting to unlock more rewards!</p>
+                <button class="action-btn" onclick="closeModal('rewardModal')" style="margin-top: 20px;">Continue</button>
+            </div>
+        </div>
+
+        <div class="modal" id="upgradeModal">
+            <div class="modal-content">
+                <button class="close-btn" onclick="closeModal('upgradeModal')">&times;</button>
+                <h2 style="color: #ffd700; margin-bottom: 20px;">🚀 Upgrade Complete!</h2>
+                <div style="font-size: 60px; margin: 20px 0;" id="upgradeIcon">⚡</div>
+                <div style="font-size: 18px;" id="upgradeText">Speed boost activated!</div>
+                <p style="margin-top: 20px;">Your ship is now more powerful!</p>
+                <button class="action-btn" onclick="closeModal('upgradeModal')" style="margin-top: 20px;">Awesome!</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game State
+        let gameState = {
+            energy: 100,
+            maxEnergy: 100,
+            shards: 0,
+            gp: 1000, // Starting with some GP for testing
+            currentPlanet: '',
+            dailyStreak: 1,
+            lastLogin: '',
+            bossHealth: 1000,
+            maxBossHealth: 1000,
+            playerDamage: 0,
+            upgrades: {
+                speed: 0,
+                damage: 0,
+                energy: 0,
+                multiplier: 0
+            },
+            skins: [],
+            achievements: []
+        };
+
+        // Initialize game
+        function initGame() {
+            generateStarfield();
+            updateUI();
+            checkDailyLogin();
+            
+            // Energy regeneration
+            setInterval(() => {
+                if (gameState.energy < gameState.maxEnergy) {
+                    gameState.energy = Math.min(gameState.maxEnergy, gameState.energy + 1);
+                    updateUI();
+                }
+            }, 5000); // Regenerate 1 energy every 5 seconds
+
+            // Auto-save game state
+            setInterval(saveGameState, 10000);
+            loadGameState();
+        }
+
+        // Generate animated starfield
+        function generateStarfield() {
+            const starfield = document.getElementById('starfield');
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 2 + 's';
+                starfield.appendChild(star);
+            }
+        }
+
+        // Screen management
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Update active nav button
+            const navMap = {
+                'galaxyScreen': 0,
+                'leaderboardScreen': 1,
+                'shopScreen': 2,
+                'minigamesScreen': 3
+            };
+            
+            if (navMap[screenId] !== undefined) {
+                document.querySelectorAll('.nav-btn')[navMap[screenId]].classList.add('active');
+            }
+
+            updateUI();
+        }
+
+        // Planet selection
+        function selectPlanet(planetName, planetId) {
+            gameState.currentPlanet = planetName;
+            document.getElementById('currentPlanet').textContent = planetName;
+            document.getElementById('mineReward').textContent = planetId * 5 + 5;
+            showScreen('miningScreen');
+            showNotification(`🌍 Landed on ${planetName}!`);
+        }
+
+        // Mining mechanics
+        function minePlanet() {
+            if (gameState.energy <= 0) {
+                showNotification('⚡ No energy! Watch an ad or wait for regeneration.');
+                return;
+            }
+
+            const currentPlanetElement = document.getElementById('currentPlanet');
+            const planetName = currentPlanetElement.textContent;
+            const planetMultiplier = getPlanetMultiplier(planetName);
+            const reward = Math.floor((10 + Math.random() * 10) * planetMultiplier);
+
+            gameState.energy -= 5;
+            gameState.shards += reward;
+            gameState.gp += Math.floor(reward * 0.5);
+
+            // Create mining beam effect
+            const miningArea = document.querySelector('.mining-area');
+            const beam = document.createElement('div');
+            beam.className = 'mining-beam';
+            miningArea.appendChild(beam);
+
+            setTimeout(() => {
+                beam.remove();
+            }, 1000);
+
+            showNotification(`💎 +${reward} Shards, +${Math.floor(reward * 0.5)} GP!`);
+            updateUI();
+        }
+
+        function getPlanetMultiplier(planetName) {
+            const multipliers = {
+                'Pyrion': 1.2,
+                'Aqueos': 1.0,
+                'Voidex': 1.8,
+                'Verdant': 1.1,
+                'Aurelia': 2.0,
+                'Crimson': 1.5
+            };
+            return multipliers[planetName] || 1.0;
+        }
+
+        // Battle system
+        function battleAliens() {
+            if (gameState.energy < 10) {
+                showNotification('⚡ Need at least 10 energy to battle!');
+                return;
+            }
+
+            gameState.energy -= 10;
+            const damage = 50 + (gameState.upgrades.damage * 25);
+            const reward = 100 + Math.floor(Math.random() * 200);
+            
+            gameState.gp += reward;
+            showNotification(`⚔️ Defeated aliens! +${reward} GP!`);
+            updateUI();
+        }
+
+        // Boss raid system
+        function attackBoss() {
+            const damage = 10 + (gameState.upgrades.damage * 5) + Math.floor(Math.random() * 20);
+            gameState.bossHealth = Math.max(0, gameState.bossHealth - damage);
+            gameState.playerDamage += damage;
+
+            if (gameState.bossHealth <= 0) {
+                // Boss defeated
+                const reward = 5000;
+                gameState.gp += reward;
+                gameState.bossHealth = gameState.maxBossHealth; // Reset boss
+                gameState.playerDamage = 0;
+                showNotification(`🐉 Boss defeated! +${reward} GP!`);
+            } else {
+                showNotification(`⚔️ Hit for ${damage} damage!`);
+            }
+
+            updateUI();
+        }
+
+        // Ad system
+        function watchAdForEnergy() {
+            showModal('adModal');
+            startAdTimer(() => {
+                gameState.energy = Math.min(gameState.maxEnergy, gameState.energy + 50);
+                closeModal('adModal');
+                showRewardModal('⚡ +50 Energy!', '⚡');
+                updateUI();
+            });
+        }
+
+        function watchAdForDamage() {
+            showModal('adModal');
+            startAdTimer(() => {
+                // Next 3 attacks deal double damage
+                gameState.adDamageBoost = 3;
+                closeModal('adModal');
+                showRewardModal('⚔️ 2x Damage for next 3 attacks!', '⚔️');
+            });
+        }
+
+        function startAdTimer(callback) {
+            let timeLeft = 5;
+            const progressBar = document.getElementById('adProgress');
+            const timeDisplay = document.getElementById('adTime');
+            const skipBtn = document.getElementById('skipBtn');
+
+            const timer = setInterval(() => {
+                timeLeft--;
+                const progress = ((5 - timeLeft) / 5) * 100;
+                progressBar.style.width = progress + '%';
+                timeDisplay.textContent = 5 - timeLeft;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    skipBtn.style.display = 'block';
+                    skipBtn.onclick = callback;
+                }
+            }, 1000);
+        }
+
+        function skipAd() {
+            const skipBtn = document.getElementById('skipBtn');
+            if (skipBtn.onclick) {
+                skipBtn.onclick();
+            }
+        }
+
+        // Daily rewards system
+        function checkDailyLogin() {
+            const today = new Date().toDateString();
+            if (gameState.lastLogin !== today) {
+                const streakBonus = gameState.dailyStreak * 100;
+                gameState.gp += streakBonus;
+                gameState.dailyStreak++;
+                gameState.lastLogin = today;
+
+                document.getElementById('streakDay').textContent = gameState.dailyStreak;
+                document.getElementById('bonusAmount').textContent = streakBonus;
+                
+                setTimeout(() => {
+                    document.getElementById('dailyReward').style.display = 'none';
+                }, 5000);
+
+                updateUI();
+            } else {
+                document.getElementById('dailyReward').style.display = 'none';
+            }
+        }
+
+        function checkDailyReward() {
+            checkDailyLogin();
+            if (document.getElementById('dailyReward').style.display === 'none') {
+                showNotification('🎁 Already claimed today! Come back tomorrow.');
+            }
+        }
+
+        // Shop system
+        function buyUpgrade(upgradeType) {
+            const costs = {
+                speed: 500,
+                damage: 750,
+                energy: 1000,
+                skin1: 2000,
+                skin2: 5000,
+                multiplier: 3000
+            };
+
+            const cost = costs[upgradeType];
+            if (gameState.gp < cost) {
+                showNotification('🏆 Not enough GP!');
+                return;
+            }
+
+            gameState.gp -= cost;
+
+            if (upgradeType.startsWith('skin')) {
+                gameState.skins.push(upgradeType);
+                showUpgradeModal('🚀', `${upgradeType === 'skin1' ? 'Black' : 'Gold'} ship skin unlocked!`);
+            } else {
+                gameState.upgrades[upgradeType]++;
+                
+                if (upgradeType === 'energy') {
+                    gameState.maxEnergy += 50;
+                    gameState.energy = gameState.maxEnergy;
+                }
+
+                const messages = {
+                    speed: 'Mining speed increased!',
+                    damage: 'Combat damage boosted!',
+                    energy: 'Maximum energy increased!',
+                    multiplier: 'GP multiplier activated!'
+                };
+
+                showUpgradeModal('⚡', messages[upgradeType]);
+            }
+
+            updateUI();
+        }
+
+        // Mini-games
+        function startAsteroidDodge() {
+            const gameArea = document.getElementById('minigameArea');
+            gameArea.innerHTML = `
+                <h3>🎮 Asteroid Dodge</h3>
+                <p>Use arrow keys or swipe to dodge asteroids!</p>
+                <div style="position: relative; width: 300px; height: 400px; background: rgba(0,0,0,0.5); border: 2px solid #ffd700; margin: 20px auto; overflow: hidden;">
+                    <div class="player-ship" id="playerShip"></div>
+                </div>
+                <div>Score: <span id="dodgeScore">0</span></div>
+                <button class="action-btn" onclick="endMinigame()">🛑 End Game</button>
+            `;
+
+            // Simple asteroid dodge game logic would go here
+            let score = 0;
+            const scoreElement = document.getElementById('dodgeScore');
+            
+            const gameLoop = setInterval(() => {
+                score += 10;
+                scoreElement.textContent = score;
+                
+                if (score >= 1000) {
+                    clearInterval(gameLoop);
+                    const reward = Math.floor(100 + Math.random() * 400);
+                    gameState.gp += reward;
+                    showNotification(`🎮 Game complete! +${reward} GP`);
+                    updateUI();
+                    endMinigame();
+                }
+            }, 1000);
+        }
+
+        function startCryptoClicker() {
+            const gameArea = document.getElementById('minigameArea');
+            let clicks = 0;
+            let timeLeft = 10;
+
+            gameArea.innerHTML = `
+                <h3>💎 Crypto Clicker</h3>
+                <p>Click as fast as you can in ${timeLeft} seconds!</p>
+                <div style="font-size: 120px; cursor: pointer; margin: 20px;" onclick="clickCrypto()">💎</div>
+                <div>Clicks: <span id="clickCount">0</span></div>
+                <div>Time: <span id="clickTime">10</span>s</div>
+            `;
+
+            const timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('clickTime').textContent = timeLeft;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    const reward = clicks * 10;
+                    gameState.gp += reward;
+                    showNotification(`🎮 ${clicks} clicks! +${reward} GP`);
+                    updateUI();
+                    endMinigame();
+                }
+            }, 1000);
+
+            window.clickCrypto = () => {
+                clicks++;
+                document.getElementById('clickCount').textContent = clicks;
+            };
+        }
+
+        function startPuzzleHack() {
+            const gameArea = document.getElementById('minigameArea');
+            gameArea.innerHTML = `
+                <h3>🧩 Puzzle Hack</h3>
+                <p>Solve the alien code sequence!</p>
+                <div style="font-size: 24px; margin: 20px;">
+                    🔢 ${Math.floor(Math.random() * 9) + 1}${Math.floor(Math.random() * 9) + 1}${Math.floor(Math.random() * 9) + 1}
+                </div>
+                <input type="number" placeholder="Enter code" id="puzzleInput" style="padding: 10px; font-size: 18px; border-radius: 5px; border: 2px solid #ffd700; background: rgba(0,0,0,0.8); color: white;">
+                <button class="action-btn" onclick="solvePuzzle()" style="margin: 10px;">🔍 Solve</button>
+                <button class="action-btn" onclick="endMinigame()">🛑 Give Up</button>
+            `;
+        }
+
+        function startPvPArena() {
+            const gameArea = document.getElementById('minigameArea');
+            gameArea.innerHTML = `
+                <h3>⚔️ CX Arena PvP</h3>
+                <p>Battle against GalaxyHunter!</p>
+                <div style="display: flex; justify-content: space-between; margin: 20px;">
+                    <div>
+                        <div>You</div>
+                        <div style="width: 100px; height: 20px; background: #4caf50; border-radius: 10px;">
+                            <div id="playerHealth" style="width: 100%; height: 100%; background: #2e7d32; border-radius: 10px;"></div>
+                        </div>
+                    </div>
+                    <div>VS</div>
+                    <div>
+                        <div>Enemy</div>
+                        <div style="width: 100px; height: 20px; background: #f44336; border-radius: 10px;">
+                            <div id="enemyHealth" style="width: 100%; height: 100%; background: #d32f2f; border-radius: 10px;"></div>
+                        </div>
+                    </div>
+                </div>
+                <button class="action-btn" onclick="pvpAttack()" style="font-size: 18px;">⚔️ ATTACK!</button>
+                <button class="action-btn" onclick="endMinigame()">🛑 Retreat</button>
+            `;
+
+            // Simple PvP simulation
+            window.pvpAttack = () => {
+                const reward = Math.floor(500 + Math.random() * 1500);
+                gameState.gp += reward;
+                showNotification(`⚔️ Victory! +${reward} GP`);
+                updateUI();
+                endMinigame();
+            };
+        }
+
+        function endMinigame() {
+            document.getElementById('minigameArea').innerHTML = `
+                <h3>Select a mini-game to start!</h3>
+                <p>Earn bonus GP and climb the leaderboards</p>
+            `;
+        }
+
+        // Modal system
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function showRewardModal(text, icon) {
+            document.getElementById('rewardText').textContent = text;
+            document.querySelector('#rewardModal .modal-content div:nth-child(3)').textContent = icon;
+            showModal('rewardModal');
+        }
+
+        function showUpgradeModal(icon, text) {
+            document.getElementById('upgradeIcon').textContent = icon;
+            document.getElementById('upgradeText').textContent = text;
+            showModal('upgradeModal');
+        }
+
+        // Notification system
+        function showNotification(text) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = text;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // UI updates
+        function updateUI() {
+            // Update all resource displays
+            document.querySelectorAll('#energy, #energyMining').forEach(el => {
+                el.textContent = gameState.energy;
+            });
+            document.querySelectorAll('#shards, #shardsMining, #shardsShop').forEach(el => {
+                el.textContent = gameState.shards;
+            });
+            document.querySelectorAll('#gp, #gpBoss, #gpLeaderboard, #gpShop, #gpMinigames').forEach(el => {
+                el.textContent = gameState.gp;
+            });
+
+            // Update energy bar
+            const energyPercent = (gameState.energy / gameState.maxEnergy) * 100;
+            document.getElementById('energyFill').style.width = energyPercent + '%';
+            document.getElementById('energyText').textContent = `${gameState.energy}/${gameState.maxEnergy}`;
+
+            // Update boss health
+            const bossPercent = (gameState.bossHealth / gameState.maxBossHealth) * 100;
+            document.getElementById('bossHealthFill').style.width = bossPercent + '%';
+            document.getElementById('bossHealthText').textContent = `${gameState.bossHealth}/${gameState.maxBossHealth}`;
+            document.getElementById('playerDamage').textContent = gameState.playerDamage;
+
+            // Update leaderboard
+            document.getElementById('leaderboardGP').textContent = gameState.gp;
+            const rank = Math.max(1, 1000 - Math.floor(gameState.gp / 100));
+            document.getElementById('leaderboardRank').textContent = rank;
+            document.getElementById('playerRank').textContent = rank;
+
+            // Update ad button state
+            const adBtn = document.getElementById('adBtn');
+            if (adBtn && gameState.energy >= gameState.maxEnergy) {
+                adBtn.disabled = true;
+                adBtn.textContent = '📺 Energy Full';
+            } else if (adBtn) {
+                adBtn.disabled = false;
+                adBtn.textContent = '📺 Watch Ad (+50 Energy)';
+            }
+        }
+
+        // Save/Load system
+        function saveGameState() {
+            localStorage.setItem('cxOdysseyState', JSON.stringify(gameState));
+        }
+
+        function loadGameState() {
+            const saved = localStorage.getItem('cxOdysseyState');
+            if (saved) {
+                gameState = { ...gameState, ...JSON.parse(saved) };
+                updateUI();
+            }
+        }
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                const activeScreen = document.querySelector('.screen.active');
+                if (activeScreen.id === 'miningScreen') {
+                    minePlanet();
+                } else if (activeScreen.id === 'bossScreen') {
+                    attackBoss();
+                }
+            }
+        });
+
+        // Touch controls for mobile
+        document.addEventListener('touchstart', (e) => {
+            // Add touch feedback
+            const target = e.target.closest('.planet, .mining-area, .action-btn');
+            if (target) {
+                target.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    target.style.transform = '';
+                }, 100);
+            }
+        });
+
+        // Initialize game on load
+        initGame();
+    </script>
+</body>
+</html>d: 100-500 GP</div>
+                </div>
+                <div class="shop-item" onclick="startCryptoClicker()">
+                    <div style="font-size: 40px;">💎</div>
+                    <div>Crypto Clicker</div>
+                    <div style="font-size: 12px;">Click as fast as you can!</div>
+                    <div style="color: #ffd700;">Reward: 200-800 GP</div>
+                </div>
+                <div class="shop-item" onclick="startPuzzleHack()">
+                    <div style="font-size: 40px;">🧩</div>
+                    <div>Puzzle Hack</div>
+                    <div style="font-size: 12px;">Solve alien puzzles!</div>
+                    <div style="color: #ffd700;">Rewar
