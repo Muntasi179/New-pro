@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CX Odyssey: Rise of the Collectors</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
             margin: 0;
@@ -521,6 +522,37 @@
             font-size: 24px;
             cursor: pointer;
         }
+
+        .tg-user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .tg-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #ffd700;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 215, 0, 0.3);
+            border-radius: 50%;
+            border-top-color: #ffd700;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -528,14 +560,34 @@
         <!-- Starfield Background -->
         <div class="stars" id="starfield"></div>
 
+        <!-- Loading Screen -->
+        <div class="screen active" id="loadingScreen">
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+                <div class="logo" style="font-size: 32px; margin-bottom: 20px;">CX ODYSSEY</div>
+                <div style="font-size: 18px; margin-bottom: 30px;">Loading game...</div>
+                <div class="loading"></div>
+                <div id="tgInitStatus" style="margin-top: 20px; font-size: 14px; color: #ffd700;">
+                    Initializing Telegram WebApp
+                </div>
+            </div>
+        </div>
+
         <!-- Main Galaxy Map Screen -->
-        <div class="screen active" id="galaxyScreen">
+        <div class="screen" id="galaxyScreen">
             <div class="header">
                 <div class="logo">CX ODYSSEY</div>
                 <div class="resources">
                     <div class="resource">⚡ <span id="energy">100</span></div>
                     <div class="resource">💎 <span id="shards">0</span></div>
                     <div class="resource">🏆 <span id="gp">0</span></div>
+                </div>
+            </div>
+            
+            <div class="tg-user-info" id="tgUserInfo">
+                <img class="tg-avatar" id="tgAvatar" src="">
+                <div>
+                    <div id="tgUserName">Player</div>
+                    <div style="font-size: 12px;">Level <span id="tgUserLevel">1</span></div>
                 </div>
             </div>
             
@@ -587,6 +639,7 @@
             <div class="action-buttons">
                 <button class="action-btn" onclick="showScreen('bossScreen')">🐉 Boss Raid</button>
                 <button class="action-btn" onclick="checkDailyReward()">🎁 Daily Login</button>
+                <button class="action-btn" onclick="shareGame()" style="background: linear-gradient(45deg, #2196f3, #1565c0);">📤 Share Game</button>
             </div>
         </div>
 
@@ -673,25 +726,11 @@
 
             <div class="leaderboard">
                 <h3 style="color: #ffd700; margin-bottom: 20px;">🏆 TOP COLLECTORS</h3>
-                <div class="leaderboard-entry top-3">
-                    <div><span style="color: #ffd700;">👑</span> CX_Master_2025</div>
-                    <div>50,000 GP</div>
-                </div>
-                <div class="leaderboard-entry top-3">
-                    <div><span style="color: #ff6b35;">🥈</span> GalaxyHunter</div>
-                    <div>45,000 GP</div>
-                </div>
-                <div class="leaderboard-entry top-3">
-                    <div><span style="color: #7209b7;">🥉</span> ShardCollector</div>
-                    <div>40,000 GP</div>
-                </div>
-                <div class="leaderboard-entry">
-                    <div>4. StarMiner_Pro</div>
-                    <div>35,000 GP</div>
-                </div>
-                <div class="leaderboard-entry">
-                    <div>5. CosmicRaider</div>
-                    <div>30,000 GP</div>
+                <div id="leaderboardEntries">
+                    <div class="leaderboard-entry top-3">
+                        <div><span style="color: #ffd700;">👑</span> Loading...</div>
+                        <div>0 GP</div>
+                    </div>
                 </div>
                 <div class="leaderboard-entry" style="background: rgba(255, 215, 0, 0.3);">
                     <div><span id="leaderboardRank">999</span>. You</div>
@@ -775,6 +814,18 @@
                     <div style="font-size: 12px;">Survive the asteroid field!</div>
                     <div style="color: #ffd700;">Reward: 300-1000 GP</div>
                 </div>
+                <div class="shop-item" onclick="startCryptoClicker()">
+                    <div style="font-size: 40px;">💎</div>
+                    <div>Crypto Clicker</div>
+                    <div style="font-size: 12px;">Click as fast as you can!</div>
+                    <div style="color: #ffd700;">Reward: 200-800 GP</div>
+                </div>
+                <div class="shop-item" onclick="startPuzzleHack()">
+                    <div style="font-size: 40px;">🧩</div>
+                    <div>Puzzle Hack</div>
+                    <div style="font-size: 12px;">Solve alien puzzles!</div>
+                    <div style="color: #ffd700;">Reward: 100-500 GP</div>
+                </div>
                 <div class="shop-item" onclick="startPvPArena()">
                     <div style="font-size: 40px;">⚔️</div>
                     <div>CX Arena PvP</div>
@@ -856,12 +907,16 @@
     </div>
 
     <script>
+        // Telegram WebApp initialization
+        let tg = window.Telegram.WebApp;
+        let user = null;
+        
         // Game State
         let gameState = {
             energy: 100,
             maxEnergy: 100,
             shards: 0,
-            gp: 1000, // Starting with some GP for testing
+            gp: 0,
             currentPlanet: '',
             dailyStreak: 1,
             lastLogin: '',
@@ -881,20 +936,37 @@
         // Initialize game
         function initGame() {
             generateStarfield();
-            updateUI();
-            checkDailyLogin();
             
-            // Energy regeneration
-            setInterval(() => {
-                if (gameState.energy < gameState.maxEnergy) {
-                    gameState.energy = Math.min(gameState.maxEnergy, gameState.energy + 1);
-                    updateUI();
+            // Initialize Telegram WebApp
+            tg.expand();
+            tg.enableClosingConfirmation();
+            
+            // Get user data from Telegram
+            user = tg.initDataUnsafe.user;
+            
+            if (user) {
+                document.getElementById('tgInitStatus').textContent = "Welcome, " + user.first_name + "!";
+                
+                // Update user info in UI
+                if (user.photo_url) {
+                    document.getElementById('tgAvatar').src = user.photo_url;
                 }
-            }, 5000); // Regenerate 1 energy every 5 seconds
-
-            // Auto-save game state
-            setInterval(saveGameState, 10000);
-            loadGameState();
+                
+                let userName = user.first_name;
+                if (user.last_name) userName += " " + user.last_name;
+                if (user.username) userName += " (@" + user.username + ")";
+                
+                document.getElementById('tgUserName').textContent = userName;
+                
+                // Load game state from backend
+                loadGameState();
+            } else {
+                document.getElementById('tgInitStatus').textContent = "Running in standalone mode";
+                setTimeout(() => {
+                    showScreen('galaxyScreen');
+                    updateUI();
+                }, 2000);
+            }
         }
 
         // Generate animated starfield
@@ -907,6 +979,96 @@
                 star.style.top = Math.random() * 100 + '%';
                 star.style.animationDelay = Math.random() * 2 + 's';
                 starfield.appendChild(star);
+            }
+        }
+
+        // API Service Functions
+        async function apiCall(endpoint, method = 'GET', data = null) {
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            };
+
+            // Add Telegram init data for authentication
+            if (tg.initData) {
+                options.headers['X-Telegram-Init-Data'] = tg.initData;
+            }
+
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+
+            try {
+                const response = await fetch(`https://de377455-befe-4354-8dcf-35f4792a3e20-00-1hpyh65p1wnre.sisko.replit.dev${endpoint}`, options);
+                
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('API call failed:', error);
+                showNotification('⚠️ Connection error. Using offline mode.');
+                throw error;
+            }
+        }
+
+        // Load game state from backend
+        async function loadGameState() {
+            try {
+                const data = await apiCall('/game/state');
+                gameState = { ...gameState, ...data };
+                updateUI();
+                
+                // Hide loading screen and show game
+                setTimeout(() => {
+                    showScreen('galaxyScreen');
+                    showNotification('🚀 Welcome to CX Odyssey!');
+                }, 1000);
+                
+            } catch (error) {
+                // If API fails, try to load from localStorage as fallback
+                const saved = localStorage.getItem('cxOdysseyState');
+                if (saved) {
+                    gameState = { ...gameState, ...JSON.parse(saved) };
+                    updateUI();
+                    
+                    setTimeout(() => {
+                        showScreen('galaxyScreen');
+                        showNotification('🚀 Welcome back to CX Odyssey!');
+                    }, 1000);
+                } else {
+                    // First time user
+                    setTimeout(() => {
+                        showScreen('galaxyScreen');
+                        showNotification('🚀 Welcome to CX Odyssey!');
+                    }, 1000);
+                }
+            }
+        }
+
+        // Save game state to backend
+        async function saveGameState() {
+            try {
+                await apiCall('/game/state', 'POST', gameState);
+            } catch (error) {
+                // If API fails, save to localStorage as fallback
+                localStorage.setItem('cxOdysseyState', JSON.stringify(gameState));
+            }
+        }
+
+        // Share game via Telegram
+        function shareGame() {
+            if (tg.showShareAlert) {
+                tg.showShareAlert({
+                    title: "CX Odyssey: Rise of the Collectors",
+                    message: "Join me in CX Odyssey - an exciting space mining and exploration game!",
+                    url: "https://t.me/YourBotName/app?startapp=ref12345"
+                });
+            } else {
+                showNotification("Share this link with friends: https://t.me/YourBotName/app?startapp=ref12345");
             }
         }
 
@@ -933,6 +1095,11 @@
                 document.querySelectorAll('.nav-btn')[navMap[screenId]].classList.add('active');
             }
 
+            // Load leaderboard if needed
+            if (screenId === 'leaderboardScreen') {
+                loadLeaderboard();
+            }
+
             updateUI();
         }
 
@@ -946,7 +1113,7 @@
         }
 
         // Mining mechanics
-        function minePlanet() {
+        async function minePlanet() {
             if (gameState.energy <= 0) {
                 showNotification('⚡ No energy! Watch an ad or wait for regeneration.');
                 return;
@@ -973,6 +1140,7 @@
 
             showNotification(`💎 +${reward} Shards, +${Math.floor(reward * 0.5)} GP!`);
             updateUI();
+            await saveGameState();
         }
 
         function getPlanetMultiplier(planetName) {
@@ -988,7 +1156,7 @@
         }
 
         // Battle system
-        function battleAliens() {
+        async function battleAliens() {
             if (gameState.energy < 10) {
                 showNotification('⚡ Need at least 10 energy to battle!');
                 return;
@@ -1001,10 +1169,11 @@
             gameState.gp += reward;
             showNotification(`⚔️ Defeated aliens! +${reward} GP!`);
             updateUI();
+            await saveGameState();
         }
 
         // Boss raid system
-        function attackBoss() {
+        async function attackBoss() {
             const damage = 10 + (gameState.upgrades.damage * 5) + Math.floor(Math.random() * 20);
             gameState.bossHealth = Math.max(0, gameState.bossHealth - damage);
             gameState.playerDamage += damage;
@@ -1021,26 +1190,29 @@
             }
 
             updateUI();
+            await saveGameState();
         }
 
         // Ad system
         function watchAdForEnergy() {
             showModal('adModal');
-            startAdTimer(() => {
+            startAdTimer(async () => {
                 gameState.energy = Math.min(gameState.maxEnergy, gameState.energy + 50);
                 closeModal('adModal');
                 showRewardModal('⚡ +50 Energy!', '⚡');
                 updateUI();
+                await saveGameState();
             });
         }
 
         function watchAdForDamage() {
             showModal('adModal');
-            startAdTimer(() => {
+            startAdTimer(async () => {
                 // Next 3 attacks deal double damage
                 gameState.adDamageBoost = 3;
                 closeModal('adModal');
                 showRewardModal('⚔️ 2x Damage for next 3 attacks!', '⚔️');
+                await saveGameState();
             });
         }
 
@@ -1072,7 +1244,7 @@
         }
 
         // Daily rewards system
-        function checkDailyLogin() {
+        async function checkDailyLogin() {
             const today = new Date().toDateString();
             if (gameState.lastLogin !== today) {
                 const streakBonus = gameState.dailyStreak * 100;
@@ -1088,6 +1260,7 @@
                 }, 5000);
 
                 updateUI();
+                await saveGameState();
             } else {
                 document.getElementById('dailyReward').style.display = 'none';
             }
@@ -1101,7 +1274,7 @@
         }
 
         // Shop system
-        function buyUpgrade(upgradeType) {
+        async function buyUpgrade(upgradeType) {
             const costs = {
                 speed: 500,
                 damage: 750,
@@ -1141,6 +1314,40 @@
             }
 
             updateUI();
+            await saveGameState();
+        }
+
+        // Leaderboard system
+        async function loadLeaderboard() {
+            try {
+                const leaderboard = await apiCall('/leaderboard');
+                const entriesContainer = document.getElementById('leaderboardEntries');
+                entriesContainer.innerHTML = '';
+                
+                leaderboard.forEach((entry, index) => {
+                    const entryEl = document.createElement('div');
+                    entryEl.className = `leaderboard-entry ${index < 3 ? 'top-3' : ''}`;
+                    
+                    let rankIcon = '';
+                    if (index === 0) rankIcon = '<span style="color: #ffd700;">👑</span> ';
+                    else if (index === 1) rankIcon = '<span style="color: #ff6b35;">🥈</span> ';
+                    else if (index === 2) rankIcon = '<span style="color: #7209b7;">🥉</span> ';
+                    
+                    entryEl.innerHTML = `
+                        <div>${rankIcon}${entry.username}</div>
+                        <div>${entry.gp.toLocaleString()} GP</div>
+                    `;
+                    
+                    entriesContainer.appendChild(entryEl);
+                });
+            } catch (error) {
+                document.getElementById('leaderboardEntries').innerHTML = `
+                    <div class="leaderboard-entry">
+                        <div>Error loading leaderboard</div>
+                        <div>0 GP</div>
+                    </div>
+                `;
+            }
         }
 
         // Mini-games
@@ -1170,6 +1377,7 @@
                     gameState.gp += reward;
                     showNotification(`🎮 Game complete! +${reward} GP`);
                     updateUI();
+                    saveGameState();
                     endMinigame();
                 }
             }, 1000);
@@ -1198,6 +1406,7 @@
                     gameState.gp += reward;
                     showNotification(`🎮 ${clicks} clicks! +${reward} GP`);
                     updateUI();
+                    saveGameState();
                     endMinigame();
                 }
             }, 1000);
@@ -1247,11 +1456,12 @@
             `;
 
             // Simple PvP simulation
-            window.pvpAttack = () => {
+            window.pvpAttack = async () => {
                 const reward = Math.floor(500 + Math.random() * 1500);
                 gameState.gp += reward;
                 showNotification(`⚔️ Victory! +${reward} GP`);
                 updateUI();
+                await saveGameState();
                 endMinigame();
             };
         }
@@ -1337,58 +1547,20 @@
             }
         }
 
-        // Save/Load system
-        function saveGameState() {
-            localStorage.setItem('cxOdysseyState', JSON.stringify(gameState));
-        }
-
-        function loadGameState() {
-            const saved = localStorage.getItem('cxOdysseyState');
-            if (saved) {
-                gameState = { ...gameState, ...JSON.parse(saved) };
+        // Energy regeneration
+        setInterval(() => {
+            if (gameState.energy < gameState.maxEnergy) {
+                gameState.energy = Math.min(gameState.maxEnergy, gameState.energy + 1);
                 updateUI();
+                saveGameState();
             }
-        }
+        }, 5000); // Regenerate 1 energy every 5 seconds
 
-        // Keyboard controls
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space') {
-                e.preventDefault();
-                const activeScreen = document.querySelector('.screen.active');
-                if (activeScreen.id === 'miningScreen') {
-                    minePlanet();
-                } else if (activeScreen.id === 'bossScreen') {
-                    attackBoss();
-                }
-            }
-        });
-
-        // Touch controls for mobile
-        document.addEventListener('touchstart', (e) => {
-            // Add touch feedback
-            const target = e.target.closest('.planet, .mining-area, .action-btn');
-            if (target) {
-                target.style.transform = 'scale(0.95)';
-                setTimeout(() => {
-                    target.style.transform = '';
-                }, 100);
-            }
-        });
+        // Auto-save game state
+        setInterval(saveGameState, 30000); // Every 30 seconds
 
         // Initialize game on load
-        initGame();
+        window.onload = initGame;
     </script>
 </body>
-</html>d: 100-500 GP</div>
-                </div>
-                <div class="shop-item" onclick="startCryptoClicker()">
-                    <div style="font-size: 40px;">💎</div>
-                    <div>Crypto Clicker</div>
-                    <div style="font-size: 12px;">Click as fast as you can!</div>
-                    <div style="color: #ffd700;">Reward: 200-800 GP</div>
-                </div>
-                <div class="shop-item" onclick="startPuzzleHack()">
-                    <div style="font-size: 40px;">🧩</div>
-                    <div>Puzzle Hack</div>
-                    <div style="font-size: 12px;">Solve alien puzzles!</div>
-                    <div style="color: #ffd700;">Rewar
+</html>
